@@ -1,0 +1,1661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MediTriage — Smart Healthcare System</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500&display=swap"
+    rel="stylesheet"
+  />
+
+  <style>
+    /* ─── THEME VARIABLES ─────────────────────────────── */
+    :root {
+      --bg:      #080d1a;   /* page background          */
+      --surface: #101828;   /* card / nav background    */
+      --surf2:   #162036;   /* input background         */
+      --border:  #1f3050;   /* subtle borders           */
+      --bord2:   #243858;   /* stronger borders         */
+      --green:   #00e5b8;   /* primary accent           */
+      --green2:  #00b896;   /* accent hover             */
+      --red:     #ff3d5a;   /* danger / emergency       */
+      --yellow:  #ffc430;   /* warnings                 */
+      --blue:    #5b8dee;   /* info                     */
+      --text:    #dce8f5;   /* main text                */
+      --muted:   #8fa3be;   /* secondary text           */
+      --faint:   #4d6485;   /* placeholder / labels     */
+      --head-font: 'Syne', sans-serif;
+      --body-font: 'DM Sans', sans-serif;
+    }
+
+    /* ─── RESET ───────────────────────────────────────── */
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--body-font);
+      font-size: 15px;
+      line-height: 1.6;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Subtle grid pattern behind everything */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0, 229, 184, 0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 229, 184, 0.025) 1px, transparent 1px);
+      background-size: 48px 48px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Custom scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--bord2); border-radius: 3px; }
+
+    /* ─── NAVIGATION ──────────────────────────────────── */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 28px;
+      height: 60px;
+      background: rgba(8, 13, 26, 0.93);
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(18px);
+    }
+
+    /* Logo */
+    .logo {
+      font-family: var(--head-font);
+      font-size: 1.3rem;
+      font-weight: 800;
+      color: var(--green);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .logo-icon {
+      width: 28px;
+      height: 28px;
+      background: var(--green);
+      border-radius: 7px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      color: var(--bg);
+    }
+    .logo em { color: var(--text); font-style: normal; }
+
+    /* Nav links */
+    .nav-links { display: flex; align-items: center; gap: 2px; list-style: none; flex-wrap: wrap; }
+    .nav-links button {
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-family: var(--body-font);
+      font-size: 0.82rem;
+      font-weight: 500;
+      padding: 7px 13px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.18s;
+      white-space: nowrap;
+    }
+    .nav-links button:hover   { color: var(--text); background: var(--surf2); }
+    .nav-links button.active  { color: var(--green); background: rgba(0, 229, 184, 0.1); }
+    .nav-links .btn-logout    { color: var(--red) !important; }
+    .nav-links .btn-logout:hover { background: rgba(255, 61, 90, 0.1) !important; }
+
+    /* ─── PAGE SYSTEM ─────────────────────────────────── */
+    /* Each page is hidden by default, shown with .active  */
+    .page {
+      display: none;
+      padding: 32px 32px 60px;
+      max-width: 1280px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+      animation: fadeIn 0.3s ease;
+    }
+    .page.active { display: block; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ─── LOGIN SCREEN ────────────────────────────────── */
+    #login-screen {
+      display: none;
+      min-height: 100vh;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      z-index: 1;
+    }
+
+    .login-card {
+      width: 420px;
+      max-width: 92vw;
+      background: var(--surface);
+      border: 1px solid var(--bord2);
+      border-radius: 20px;
+      padding: 40px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+      animation: fadeIn 0.4s ease;
+    }
+
+    .login-logo {
+      font-family: var(--head-font);
+      font-size: 1.9rem;
+      font-weight: 800;
+      color: var(--green);
+      margin-bottom: 4px;
+    }
+    .login-logo em { color: var(--text); font-style: normal; }
+    .login-sub  { color: var(--muted); font-size: 0.88rem; margin-bottom: 28px; }
+
+    /* ─── TYPOGRAPHY ──────────────────────────────────── */
+    .page-title {
+      font-family: var(--head-font);
+      font-size: clamp(1.5rem, 3vw, 2.3rem);
+      font-weight: 800;
+      line-height: 1.1;
+      margin-bottom: 6px;
+    }
+    .page-title .accent { color: var(--green); }
+    .page-desc  { color: var(--muted); font-size: 0.9rem; margin-bottom: 22px; }
+    .sec-title  {
+      font-family: var(--head-font);
+      font-size: 0.95rem;
+      font-weight: 700;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* ─── CARDS ───────────────────────────────────────── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 22px;
+    }
+
+    /* Stat cards row (4 columns) */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-bottom: 22px;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Coloured top stripe on stat cards */
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      inset: 0 0 auto 0;
+      height: 3px;
+    }
+    .stat-card.green::before  { background: var(--green); }
+    .stat-card.red::before    { background: var(--red); }
+    .stat-card.yellow::before { background: var(--yellow); }
+    .stat-card.blue::before   { background: var(--blue); }
+
+    .stat-label { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 10px; }
+    .stat-value { font-family: var(--head-font); font-size: 2.1rem; font-weight: 800; line-height: 1; }
+    .stat-sub   { font-size: 0.75rem; color: var(--faint); margin-top: 6px; }
+
+    .stat-card.green  .stat-value { color: var(--green); }
+    .stat-card.red    .stat-value { color: var(--red); }
+    .stat-card.yellow .stat-value { color: var(--yellow); }
+    .stat-card.blue   .stat-value { color: var(--blue); }
+
+    /* Grid layout helpers */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+
+    /* ─── TABLES ──────────────────────────────────────── */
+    .table-wrap { overflow-x: auto; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+
+    thead th {
+      text-align: left;
+      padding: 9px 13px;
+      color: var(--faint);
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    tbody td {
+      padding: 12px 13px;
+      border-bottom: 1px solid rgba(31, 48, 80, 0.5);
+      vertical-align: middle;
+    }
+    tbody tr:last-child td  { border-bottom: none; }
+    tbody tr:hover td       { background: rgba(255, 255, 255, 0.02); }
+
+    /* ─── STATUS BADGES ───────────────────────────────── */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.4px;
+      white-space: nowrap;
+    }
+    .badge.normal,    .badge.NORMAL    { background: rgba(0, 229, 184, 0.12); color: var(--green); }
+    .badge.emergency, .badge.EMERGENCY { background: rgba(255, 61, 90, 0.12);  color: var(--red); }
+    .badge.confirmed                   { background: rgba(91, 141, 238, 0.12); color: var(--blue); }
+    .badge.pending,   .badge.waiting   { background: rgba(255, 196, 48, 0.12); color: var(--yellow); }
+    .badge.completed, .badge.done      { background: rgba(77, 100, 133, 0.2);  color: var(--faint); }
+    .badge.cancelled                   { background: rgba(255, 61, 90, 0.08);  color: #e06070; }
+
+    /* ─── FORMS ───────────────────────────────────────── */
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 13px; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-group.full { grid-column: 1 / -1; }
+
+    label {
+      font-size: 0.7rem;
+      color: var(--muted);
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+
+    input, select, textarea {
+      background: var(--surf2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 9px;
+      padding: 10px 13px;
+      font-family: var(--body-font);
+      font-size: 0.88rem;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      width: 100%;
+    }
+    input::placeholder, textarea::placeholder { color: var(--faint); }
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--green);
+      box-shadow: 0 0 0 3px rgba(0, 229, 184, 0.1);
+    }
+    select option { background: var(--surf2); }
+    textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
+
+    /* ─── BUTTONS ─────────────────────────────────────── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 10px 20px;
+      border-radius: 9px;
+      border: none;
+      cursor: pointer;
+      font-family: var(--head-font);
+      font-weight: 700;
+      font-size: 0.85rem;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .btn-primary { background: var(--green); color: var(--bg); }
+    .btn-primary:hover {
+      background: var(--green2);
+      transform: translateY(-1px);
+      box-shadow: 0 8px 24px rgba(0, 229, 184, 0.25);
+    }
+
+    .btn-danger { background: var(--red); color: #fff; }
+    .btn-danger:hover { background: #cc2f47; transform: translateY(-1px); }
+
+    .btn-outline { background: transparent; border: 1px solid var(--bord2); color: var(--text); }
+    .btn-outline:hover { border-color: var(--green); color: var(--green); }
+
+    .btn-ghost { background: var(--surf2); color: var(--muted); border: 1px solid var(--border); }
+    .btn-ghost:hover { color: var(--text); border-color: var(--bord2); }
+
+    .btn-sm   { padding: 6px 13px; font-size: 0.78rem; }
+    .btn-full { width: 100%; }
+
+    .btn-group { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 18px; }
+
+    /* ─── TRIAGE RESULT BOX ───────────────────────────── */
+    .triage-box {
+      display: none;
+      margin-top: 20px;
+      border-radius: 16px;
+      padding: 20px 22px;
+      border: 2px solid transparent;
+    }
+    .triage-box.show      { display: block; animation: fadeIn 0.3s ease; }
+    .triage-box.normal    { border-color: var(--green); background: rgba(0, 229, 184, 0.05); }
+    .triage-box.emergency {
+      border-color: var(--red);
+      background: rgba(255, 61, 90, 0.05);
+      animation: emergencyPulse 2s ease 2;
+    }
+    @keyframes emergencyPulse {
+      0%, 100% { box-shadow: none; }
+      50%      { box-shadow: 0 0 30px rgba(255, 61, 90, 0.3); }
+    }
+
+    .triage-level  { font-family: var(--head-font); font-size: 1.4rem; font-weight: 800; margin-bottom: 6px; }
+    .triage-advice { font-size: 0.88rem; color: var(--muted); line-height: 1.6; }
+    .triage-reason {
+      margin-top: 12px;
+      font-size: 0.78rem;
+      color: var(--faint);
+      line-height: 1.9;
+      border-top: 1px solid var(--border);
+      padding-top: 11px;
+    }
+
+    /* ─── SYMPTOM CHECKBOX TAGS ───────────────────────── */
+    .symptom-grid { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 8px; }
+
+    .sym-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 0.79rem;
+      font-weight: 500;
+      cursor: pointer;
+      background: var(--surf2);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      transition: all 0.15s;
+      user-select: none;
+    }
+    .sym-tag:hover              { border-color: var(--bord2); color: var(--text); }
+    .sym-tag.checked            { border-color: var(--green);  color: var(--green);  background: rgba(0, 229, 184, 0.08); }
+    .sym-tag.red-flag           { border-color: rgba(255, 61, 90, 0.3); color: #e87b8a; background: rgba(255, 61, 90, 0.05); }
+    .sym-tag.red-flag.checked   { border-color: var(--red);    color: var(--red);    background: rgba(255, 61, 90, 0.12); }
+    .sym-tag input[type="checkbox"] { display: none; }
+
+    /* ─── NOTIFICATION FEED ───────────────────────────── */
+    .notif-feed { display: flex; flex-direction: column; gap: 10px; }
+
+    .notif-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 13px;
+      padding: 13px 15px;
+      border-radius: 12px;
+      background: var(--surf2);
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+    .notif-item:hover              { border-color: var(--bord2); }
+    .notif-item.unread             { border-left: 3px solid var(--green); }
+    .notif-item.unread.urgent      { border-left-color: var(--red); }
+
+    .notif-icon    { font-size: 1.2rem; flex-shrink: 0; margin-top: 2px; }
+    .notif-body    { flex: 1; min-width: 0; }
+    .notif-title   { font-weight: 600; font-size: 0.87rem; margin-bottom: 3px; }
+    .notif-message { font-size: 0.79rem; color: var(--muted); line-height: 1.5; }
+    .notif-time    { font-size: 0.72rem; color: var(--faint); margin-left: auto; flex-shrink: 0; white-space: nowrap; }
+
+    /* ─── LIVE PULSE INDICATOR ────────────────────────── */
+    .live-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.72rem;
+      color: var(--red);
+      font-weight: 600;
+    }
+    .live-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--red);
+      animation: livePulse 1.4s infinite;
+    }
+    @keyframes livePulse {
+      0%, 100% { opacity: 1;   transform: scale(1); }
+      50%      { opacity: 0.3; transform: scale(1.6); }
+    }
+
+    /* ─── CODE BLOCK ──────────────────────────────────── */
+    .code-block {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.77rem;
+      color: #93c5fd;
+      line-height: 1.9;
+      overflow-x: auto;
+    }
+    /* Syntax highlight spans */
+    .c-keyword  { color: #f9a03a; }
+    .c-func     { color: var(--green); }
+    .c-comment  { color: var(--faint); font-style: italic; }
+    .c-string   { color: #a5d6a7; }
+    .c-number   { color: #ce93d8; }
+
+    /* ─── MODAL ───────────────────────────────────────── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 500;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(4px);
+    }
+    .modal-overlay.open { display: flex; }
+
+    .modal-box {
+      background: var(--surface);
+      border: 1px solid var(--bord2);
+      border-radius: 18px;
+      padding: 30px;
+      width: 460px;
+      max-width: 92vw;
+      box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
+      animation: fadeIn 0.25s ease;
+    }
+    .modal-title { font-family: var(--head-font); font-size: 1.1rem; font-weight: 800; margin-bottom: 18px; }
+    .modal-close {
+      float: right;
+      background: none;
+      border: none;
+      color: var(--faint);
+      font-size: 1.4rem;
+      cursor: pointer;
+      line-height: 1;
+    }
+
+    /* ─── DIVIDER ─────────────────────────────────────── */
+    .divider { border: none; border-top: 1px solid var(--border); margin: 22px 0; }
+
+    /* ─── TOAST NOTIFICATION ──────────────────────────── */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      padding: 11px 20px;
+      border-radius: 11px;
+      font-size: 0.86rem;
+      font-weight: 500;
+      background: var(--surface);
+      border: 1px solid var(--green);
+      color: var(--text);
+      z-index: 9999;
+      opacity: 0;
+      transform: translateY(12px);
+      transition: all 0.28s ease;
+      pointer-events: none;
+      max-width: 300px;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+    }
+    #toast.show  { opacity: 1; transform: translateY(0); }
+    #toast.error { border-color: var(--red); }
+
+    /* ─── RESPONSIVE ──────────────────────────────────── */
+    @media (max-width: 900px) {
+      .stats-row, .grid-2, .grid-3, .form-grid { grid-template-columns: 1fr !important; }
+      .form-group.full { grid-column: span 1; }
+      .page { padding: 18px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ════════════════════════════════════════════
+       TOAST  — small pop-up message at bottom-right
+  ════════════════════════════════════════════ -->
+  <div id="toast"></div>
+
+  <!-- ════════════════════════════════════════════
+       LOGIN SCREEN
+  ════════════════════════════════════════════ -->
+  <div id="login-screen" style="display: flex;">
+    <div class="login-card">
+      <div class="login-logo">Medi<em>Triage</em></div>
+      <p class="login-sub">
+        Smart Healthcare Appointment &amp; Triage System<br>
+        Staff Portal — Please sign in to continue
+      </p>
+
+      <div class="form-group" style="margin-bottom: 12px;">
+        <label>Username</label>
+        <input id="lu" placeholder="e.g. admin" autocomplete="username" />
+      </div>
+
+      <div class="form-group" style="margin-bottom: 20px;">
+        <label>Password</label>
+        <input
+          type="password" id="lp" placeholder="••••••••"
+          autocomplete="current-password"
+          onkeydown="if (event.key === 'Enter') doLogin()"
+        />
+      </div>
+
+      <button class="btn btn-primary btn-full" onclick="doLogin()">Sign In</button>
+
+      <p style="text-align: center; font-size: 0.8rem; color: var(--faint); margin-top: 14px;">
+        No account?
+        <a href="#" onclick="doRegister()"
+           style="color: var(--green); text-decoration: none; font-weight: 600;">
+          Register here
+        </a>
+      </p>
+
+      <div style="margin-top: 16px; padding: 11px 13px; background: var(--surf2); border-radius: 9px; font-size: 0.76rem; color: var(--faint);">
+        💡 <strong style="color: var(--muted);">Demo:</strong>
+        Register with any username/password to get started.
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════
+       MAIN APP  (hidden until logged in)
+  ════════════════════════════════════════════ -->
+  <div id="app" style="display: none;">
+
+    <!-- NAV BAR -->
+    <nav>
+      <div class="logo">
+        <div class="logo-icon">🏥</div>
+        Medi<em>Triage</em>
+      </div>
+      <ul class="nav-links">
+        <li><button data-pg="dashboard"    onclick="goTo('dashboard')">Dashboard</button></li>
+        <li><button data-pg="booking"      onclick="goTo('booking')">Book Appt.</button></li>
+        <li><button data-pg="triage"       onclick="goTo('triage')">Triage</button></li>
+        <li><button data-pg="appointments" onclick="goTo('appointments')">Appointments</button></li>
+        <li><button data-pg="triage_logs"  onclick="goTo('triage_logs')">Triage Logs</button></li>
+        <li><button data-pg="notifs"       onclick="goTo('notifs')">Alerts</button></li>
+        <li><button class="btn-logout"     onclick="logout()">Logout</button></li>
+      </ul>
+    </nav>
+
+    <!-- ══════════════════════════════════
+         PAGE 1 — DASHBOARD
+    ══════════════════════════════════ -->
+    <div class="page" id="pg-dashboard">
+      <div class="page-title">Smart <span class="accent">Healthcare</span> Dashboard</div>
+      <p class="page-desc">Live overview — appointments, triage queue, emergency alerts.</p>
+
+      <!-- 4 stat cards -->
+      <div class="stats-row">
+        <div class="stat-card green">
+          <div class="stat-label">Today's Total</div>
+          <div class="stat-value" id="stat-total">—</div>
+          <div class="stat-sub">All appointments</div>
+        </div>
+        <div class="stat-card red">
+          <div class="stat-label">Emergency Queue</div>
+          <div class="stat-value" id="stat-emergency">—</div>
+          <div class="stat-sub">
+            <span class="live-pill"><span class="live-dot"></span>LIVE</span>
+          </div>
+        </div>
+        <div class="stat-card yellow">
+          <div class="stat-label">Confirmed</div>
+          <div class="stat-value" id="stat-confirmed">—</div>
+          <div class="stat-sub">Awaiting visit</div>
+        </div>
+        <div class="stat-card blue">
+          <div class="stat-label">Triage Runs</div>
+          <div class="stat-value" id="stat-triage">—</div>
+          <div class="stat-sub">All time</div>
+        </div>
+      </div>
+
+      <!-- Two tables side by side -->
+      <div class="grid-2">
+        <div class="card">
+          <div class="sec-title">🚨 Emergency Queue</div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>Patient</th><th>Dept</th><th>Time</th><th>Status</th></tr>
+              </thead>
+              <tbody id="dash-emergency"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card">
+          <div class="sec-title">📋 Today's Schedule</div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>Patient</th><th>Dept</th><th>Time</th><th>Status</th></tr>
+              </thead>
+              <tbody id="dash-schedule"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════
+         PAGE 2 — BOOK APPOINTMENT
+    ══════════════════════════════════ -->
+    <div class="page" id="pg-booking">
+      <div class="page-title">Book <span class="accent">Appointment</span></div>
+      <p class="page-desc">Fill patient details — triage is auto-classified on submission.</p>
+
+      <div style="max-width: 700px;">
+        <div class="card">
+
+          <!-- Patient details -->
+          <div class="sec-title">👤 Patient Information</div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Full Name *</label>
+              <input id="b-name" placeholder="e.g. Priya Sharma" />
+            </div>
+            <div class="form-group">
+              <label>Age *</label>
+              <input type="number" id="b-age" placeholder="30" min="0" max="120" />
+            </div>
+            <div class="form-group">
+              <label>Phone *</label>
+              <input type="tel" id="b-phone" placeholder="+91 98765 43210" />
+            </div>
+            <div class="form-group">
+              <label>Email</label>
+              <input type="email" id="b-email" placeholder="patient@email.com" />
+            </div>
+            <div class="form-group">
+              <label>Gender</label>
+              <select id="b-gender">
+                <option value="">Select</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Blood Group</label>
+              <select id="b-blood">
+                <option value="">Unknown</option>
+                <option>A+</option><option>A−</option>
+                <option>B+</option><option>B−</option>
+                <option>AB+</option><option>AB−</option>
+                <option>O+</option><option>O−</option>
+              </select>
+            </div>
+          </div>
+
+          <hr class="divider" />
+
+          <!-- Appointment details -->
+          <div class="sec-title">📅 Appointment Details</div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Department *</label>
+              <select id="b-dept">
+                <option value="">Select</option>
+                <option value="general_medicine">General Medicine</option>
+                <option value="cardiology">Cardiology</option>
+                <option value="orthopedics">Orthopedics</option>
+                <option value="neurology">Neurology</option>
+                <option value="pediatrics">Pediatrics</option>
+                <option value="dermatology">Dermatology</option>
+                <option value="gynecology">Gynecology</option>
+                <option value="emergency">Emergency</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Age Group (for triage)</label>
+              <select id="b-agegroup">
+                <option value="adult">Adult (18–60)</option>
+                <option value="child">Child (under 18)</option>
+                <option value="senior">Senior (60+)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Date *</label>
+              <input type="date" id="b-date" />
+            </div>
+            <div class="form-group">
+              <label>Time *</label>
+              <select id="b-time">
+                <option value="">Select Slot</option>
+                <option value="09:00">9:00 AM</option>
+                <option value="10:00">10:00 AM</option>
+                <option value="11:30">11:30 AM</option>
+                <option value="14:00">2:00 PM</option>
+                <option value="15:30">3:30 PM</option>
+                <option value="17:00">5:00 PM</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Temperature (°F)</label>
+              <input type="number" id="b-temp" placeholder="98.6" step="0.1" />
+            </div>
+            <div class="form-group">
+              <label>O2 Saturation (%)</label>
+              <input type="number" id="b-o2" placeholder="98" min="60" max="100" />
+            </div>
+            <div class="form-group full">
+              <label>Symptoms / Chief Complaint</label>
+              <textarea id="b-symptoms"
+                placeholder="Describe symptoms — e.g. severe chest pain, shortness of breath, high fever above 104°F...">
+              </textarea>
+            </div>
+          </div>
+
+          <div class="btn-group">
+            <button class="btn btn-primary" onclick="bookAppointment()">✔ Confirm Booking</button>
+            <button class="btn btn-ghost"   onclick="clearBookingForm()">✕ Clear</button>
+          </div>
+
+          <!-- Auto-triage result shown after booking -->
+          <div class="triage-box" id="booking-triage-box">
+            <div class="triage-level"  id="booking-triage-level"></div>
+            <div class="triage-advice" id="booking-triage-advice"></div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════
+         PAGE 3 — TRIAGE CHECK
+    ══════════════════════════════════ -->
+    <div class="page" id="pg-triage">
+      <div class="page-title">Patient <span class="accent">Triage</span> Classification</div>
+      <p class="page-desc">Python rule engine — classify severity by symptoms and vital signs.</p>
+
+      <div class="grid-2">
+
+        <!-- Left: Input form -->
+        <div class="card">
+          <div class="sec-title">🩺 Symptom Input</div>
+
+          <div class="form-group" style="margin-bottom: 13px;">
+            <label>Patient ID *</label>
+            <input type="number" id="t-pid" placeholder="Enter Patient ID" />
+          </div>
+
+          <div class="form-group" style="margin-bottom: 13px;">
+            <label>Select Symptoms</label>
+            <!-- Symptom tags are built dynamically by JavaScript -->
+            <div class="symptom-grid" id="symptom-grid"></div>
+          </div>
+
+          <div class="form-grid" style="margin-bottom: 13px;">
+            <div class="form-group">
+              <label>Temperature (°F)</label>
+              <input type="number" id="t-temp" placeholder="98.6" step="0.1" />
+            </div>
+            <div class="form-group">
+              <label>O2 Saturation (%)</label>
+              <input type="number" id="t-o2" placeholder="98" min="60" max="100" />
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 18px;">
+            <label>Age Group</label>
+            <select id="t-agegroup">
+              <option value="adult">Adult (18–60)</option>
+              <option value="child">Child (under 18)</option>
+              <option value="senior">Senior (60+)</option>
+            </select>
+          </div>
+
+          <button class="btn btn-primary btn-full" onclick="runTriage()">
+            ⚡ Run Triage Classification
+          </button>
+
+          <!-- Triage result shown after classification -->
+          <div class="triage-box" id="triage-result-box">
+            <div class="triage-level"  id="triage-result-level"></div>
+            <div class="triage-advice" id="triage-result-advice"></div>
+            <div class="triage-reason" id="triage-result-reasoning"></div>
+          </div>
+        </div>
+
+        <!-- Right: Python logic display + score table -->
+        <div>
+          <div class="card" style="margin-bottom: 16px;">
+            <div class="sec-title">🐍 Python Triage Engine</div>
+            <div class="code-block">
+<span class="c-comment"># services/triage_engine.py</span>
+<span class="c-keyword">def</span> <span class="c-func">classify_patient</span>(symptoms, temp, o2, age):
+  RED_FLAGS = {<span class="c-string">"chest_pain"</span>, <span class="c-string">"unconscious"</span>,
+               <span class="c-string">"difficulty_breathing"</span>, ...}
+  <span class="c-keyword">for</span> s <span class="c-keyword">in</span> symptoms:
+    <span class="c-keyword">if</span> s <span class="c-keyword">in</span> RED_FLAGS:
+      <span class="c-keyword">return</span> TriageResult(<span class="c-string">"EMERGENCY"</span>, score=<span class="c-number">99</span>)
+  score = <span class="c-number">0</span>
+  <span class="c-keyword">if</span> temp >= <span class="c-number">104</span>:   score += <span class="c-number">3</span>
+  <span class="c-keyword">elif</span> temp >= <span class="c-number">102</span>: score += <span class="c-number">1</span>
+  <span class="c-keyword">if</span> o2 <= <span class="c-number">90</span>:     score += <span class="c-number">3</span>
+  <span class="c-keyword">elif</span> o2 <= <span class="c-number">94</span>:   score += <span class="c-number">2</span>
+  <span class="c-keyword">if</span> age <span class="c-keyword">in</span> (<span class="c-string">"child"</span>, <span class="c-string">"senior"</span>): score += <span class="c-number">1</span>
+  <span class="c-keyword">return</span> <span class="c-string">"EMERGENCY"</span> <span class="c-keyword">if</span> score >= <span class="c-number">4</span> <span class="c-keyword">else</span> <span class="c-string">"NORMAL"</span>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="sec-title">📊 Score Reference</div>
+            <table>
+              <thead><tr><th>Condition</th><th>Points</th></tr></thead>
+              <tbody>
+                <tr><td>🚨 Red-flag symptom</td>       <td style="color:var(--red);font-weight:700">→ EMERGENCY</td></tr>
+                <tr><td>🌡 Temperature ≥ 104°F</td>    <td>+3</td></tr>
+                <tr><td>🌡 Temperature ≥ 102°F</td>    <td>+1</td></tr>
+                <tr><td>🫁 O2 saturation ≤ 90%</td>    <td>+3</td></tr>
+                <tr><td>🫁 O2 saturation ≤ 94%</td>    <td>+2</td></tr>
+                <tr><td>👶 Child / 👴 Senior</td>       <td>+1</td></tr>
+                <tr><td>🔴 Total score ≥ 4</td>         <td style="color:var(--red);font-weight:700">EMERGENCY</td></tr>
+                <tr><td>🟢 Total score &lt; 4</td>      <td style="color:var(--green);font-weight:700">NORMAL</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════
+         PAGE 4 — APPOINTMENTS LIST
+    ══════════════════════════════════ -->
+    <div class="page" id="pg-appointments">
+      <div class="page-title">All <span class="accent">Appointments</span></div>
+      <p class="page-desc">View and manage every booked appointment.</p>
+
+      <!-- Filters -->
+      <div style="display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap;">
+        <select id="appt-filter-status" onchange="loadAppointments()"
+                style="width: auto; padding: 8px 13px;">
+          <option value="">All Statuses</option>
+          <option value="confirmed">Confirmed</option>
+          <option value="pending">Pending</option>
+          <option value="completed">Completed</option>
+          <option value="cancelled">Cancelled</option>
+        </select>
+        <select id="appt-filter-triage" onchange="loadAppointments()"
+                style="width: auto; padding: 8px 13px;">
+          <option value="">All Triage</option>
+          <option value="NORMAL">Normal</option>
+          <option value="EMERGENCY">Emergency</option>
+        </select>
+        <button class="btn btn-ghost btn-sm" onclick="loadAppointments()">↻ Refresh</button>
+      </div>
+
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Patient</th>
+                <th>Department</th>
+                <th>Date &amp; Time</th>
+                <th>Triage</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="appointments-tbody">
+              <tr>
+                <td colspan="7" style="color: var(--faint); text-align: center; padding: 22px;">
+                  Loading...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════
+         PAGE 5 — TRIAGE LOGS
+    ══════════════════════════════════ -->
+    <div class="page" id="pg-triage_logs">
+      <div class="page-title">Triage <span class="accent">Logs</span></div>
+      <p class="page-desc">Complete history of every triage classification.</p>
+
+      <div style="display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap;">
+        <select id="tlog-filter" onchange="loadTriageLogs()"
+                style="width: auto; padding: 8px 13px;">
+          <option value="">All Results</option>
+          <option value="NORMAL">Normal</option>
+          <option value="EMERGENCY">Emergency</option>
+        </select>
+        <button class="btn btn-ghost btn-sm" onclick="loadTriageLogs()">↻ Refresh</button>
+      </div>
+
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Patient</th>
+                <th>Symptoms</th>
+                <th>Temp</th>
+                <th>O2%</th>
+                <th>Age Grp</th>
+                <th>Score</th>
+                <th>Time</th>
+                <th>Result</th>
+              </tr>
+            </thead>
+            <tbody id="tlog-tbody">
+              <tr>
+                <td colspan="9" style="color: var(--faint); text-align: center; padding: 22px;">
+                  Loading...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════
+         PAGE 6 — NOTIFICATIONS / ALERTS
+    ══════════════════════════════════ -->
+    <div class="page" id="pg-notifs">
+      <div style="display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 14px; margin-bottom: 22px;">
+        <div>
+          <div class="page-title">Alerts &amp; <span class="accent">Notifications</span></div>
+          <p class="page-desc" style="margin-bottom: 0;">Automated SMS, email, and emergency alerts.</p>
+        </div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+          <button class="btn btn-ghost btn-sm"  onclick="openModal('reminder')">📅 Send Reminder</button>
+          <button class="btn btn-danger btn-sm" onclick="openModal('emergency')">🚨 Emergency Alert</button>
+          <button class="btn btn-ghost btn-sm"  onclick="loadNotifications()">↻ Refresh</button>
+        </div>
+      </div>
+
+      <div class="notif-feed" id="notif-feed">
+        <div style="color: var(--faint); text-align: center; padding: 28px;">Loading...</div>
+      </div>
+    </div>
+
+  </div><!-- end #app -->
+
+  <!-- ════════════════════════════════════════════
+       NOTIFICATION MODAL
+  ════════════════════════════════════════════ -->
+  <div class="modal-overlay" id="notif-modal">
+    <div class="modal-box">
+      <button class="modal-close" onclick="closeModal()">×</button>
+      <div class="modal-title" id="modal-title">Send Notification</div>
+
+      <div class="form-group" style="margin-bottom: 11px;">
+        <label>Patient ID *</label>
+        <input type="number" id="modal-pid" placeholder="Enter patient ID" />
+      </div>
+      <div class="form-group" style="margin-bottom: 11px;">
+        <label>Title *</label>
+        <input id="modal-notif-title" placeholder="Notification title" />
+      </div>
+      <div class="form-group" style="margin-bottom: 18px;">
+        <label>Message *</label>
+        <textarea id="modal-notif-msg" placeholder="Message..."></textarea>
+      </div>
+
+      <div class="btn-group" style="margin-top: 0;">
+        <button class="btn btn-primary" id="modal-send-btn" onclick="sendNotification()">Send</button>
+        <button class="btn btn-ghost"   onclick="closeModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════
+       JAVASCRIPT
+  ════════════════════════════════════════════ -->
+  <script>
+
+    // ── GLOBALS ──────────────────────────────────────────────
+    const API_BASE = '/api';
+    let TOKEN      = localStorage.getItem('mt_token') || '';
+    let modalType  = 'reminder';
+
+    // Sample notifications shown when backend is offline
+    const localNotifs = [
+      { icon:'🚨', title:'Emergency Alert — Test Patient',  msg:'Critical triage: Chest pain + O2 88%. Immediate attention required.', time:'2m ago',  urgent:true,  read:false },
+      { icon:'✅', title:'Appointment Confirmed — #A0001',  msg:'Booking confirmed for General Medicine on Mar 09 at 10:00 AM.',        time:'10m ago', urgent:false, read:false },
+      { icon:'📅', title:'Reminder — Priya Sharma',         msg:'Your appointment is tomorrow at 10:00 AM. Arrive 10 mins early.',       time:'1h ago',  urgent:false, read:true  },
+      { icon:'📊', title:'Daily Summary',                   msg:'12 appointments, 2 emergencies. Avg wait reduced by 4 mins.',          time:'8h ago',  urgent:false, read:true  },
+    ];
+
+    // Local triage log entries (used when backend is offline)
+    const localTLogs = [];
+
+    // ── TOAST ─────────────────────────────────────────────────
+    function showToast(message, isError = false) {
+      const el = document.getElementById('toast');
+      el.textContent = message;
+      el.className   = 'show' + (isError ? ' error' : '');
+      clearTimeout(el._timer);
+      el._timer = setTimeout(() => (el.className = ''), 3400);
+    }
+
+    // ── API HELPER ────────────────────────────────────────────
+    // Sends a request to the Flask backend with JWT auth
+    async function apiFetch(path, method = 'GET', body = null) {
+      const options = {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          ...(TOKEN ? { 'Authorization': 'Bearer ' + TOKEN } : {}),
+        },
+      };
+      if (body) options.body = JSON.stringify(body);
+
+      const response = await fetch(API_BASE + path, options);
+      const data     = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || 'HTTP ' + response.status);
+      return data;
+    }
+
+    // ── AUTH ──────────────────────────────────────────────────
+    async function doLogin() {
+      const username = document.getElementById('lu').value.trim();
+      const password = document.getElementById('lp').value;
+      if (!username || !password) { showToast('Enter username and password.', true); return; }
+
+      try {
+        const data = await apiFetch('/auth/login', 'POST', { username, password });
+        TOKEN = data.token;
+        localStorage.setItem('mt_token', TOKEN);
+        showApp();
+      } catch (e) {
+        showToast(e.message || 'Login failed.', true);
+      }
+    }
+
+    async function doRegister() {
+      const username = prompt('Choose a username:');  if (!username) return;
+      const email    = prompt('Your email:');         if (!email)    return;
+      const password = prompt('Choose a password:');  if (!password) return;
+
+      try {
+        const data = await apiFetch('/auth/register', 'POST', { username, email, password });
+        TOKEN = data.token;
+        localStorage.setItem('mt_token', TOKEN);
+        showApp();
+        showToast('Registered successfully!');
+      } catch (e) {
+        showToast(e.message || 'Registration failed.', true);
+      }
+    }
+
+    function logout() {
+      TOKEN = '';
+      localStorage.removeItem('mt_token');
+      document.getElementById('app').style.display          = 'none';
+      document.getElementById('login-screen').style.display = 'flex';
+    }
+
+    function showApp() {
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('app').style.display          = 'block';
+      goTo('dashboard');
+    }
+
+    // ── NAVIGATION ────────────────────────────────────────────
+    function goTo(pageId) {
+      // Hide all pages and deactivate all nav buttons
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('[data-pg]').forEach(b => b.classList.remove('active'));
+
+      // Show selected page and highlight its nav button
+      document.getElementById('pg-' + pageId)?.classList.add('active');
+      document.querySelector('[data-pg="' + pageId + '"]')?.classList.add('active');
+
+      // Load data for the page
+      if (pageId === 'dashboard')    loadDashboard();
+      if (pageId === 'appointments') loadAppointments();
+      if (pageId === 'triage_logs')  loadTriageLogs();
+      if (pageId === 'notifs')       loadNotifications();
+    }
+
+    // ── DASHBOARD ─────────────────────────────────────────────
+    async function loadDashboard() {
+      try {
+        const [summary, triageStats] = await Promise.all([
+          apiFetch('/appointments/summary/today'),
+          apiFetch('/triage/stats'),
+        ]);
+
+        document.getElementById('stat-total').textContent     = summary.total     ?? 0;
+        document.getElementById('stat-emergency').textContent = summary.emergency  ?? 0;
+        document.getElementById('stat-confirmed').textContent = summary.confirmed  ?? 0;
+        document.getElementById('stat-triage').textContent    = triageStats.total  ?? 0;
+
+        const appts = await apiFetch('/appointments/');
+        renderDashEmergency(appts.appointments || []);
+        renderDashSchedule(appts.appointments  || []);
+      } catch (e) {
+        // Backend offline — show dashes, tables remain empty
+      }
+    }
+
+    function renderDashEmergency(appointments) {
+      const tbody     = document.getElementById('dash-emergency');
+      const emergency = appointments.filter(a => a.triage_level === 'EMERGENCY').slice(0, 5);
+
+      tbody.innerHTML = emergency.length
+        ? emergency.map(a => `
+            <tr>
+              <td><strong>${a.patient_name || '—'}</strong></td>
+              <td>${(a.department || '').replace(/_/g, ' ')}</td>
+              <td>${formatDate(a.appointment_dt)}</td>
+              <td><span class="badge ${a.status}">${a.status}</span></td>
+            </tr>`).join('')
+        : `<tr><td colspan="4" style="color:var(--faint);text-align:center;padding:18px">No emergencies 🎉</td></tr>`;
+    }
+
+    function renderDashSchedule(appointments) {
+      const tbody = document.getElementById('dash-schedule');
+      const slice = appointments.slice(0, 6);
+
+      tbody.innerHTML = slice.length
+        ? slice.map(a => `
+            <tr>
+              <td>${a.patient_name || '—'}</td>
+              <td>${(a.department || '').replace(/_/g, ' ')}</td>
+              <td>${formatDate(a.appointment_dt)}</td>
+              <td><span class="badge ${a.status}">${a.status}</span></td>
+            </tr>`).join('')
+        : `<tr><td colspan="4" style="color:var(--faint);text-align:center;padding:18px">No appointments today.</td></tr>`;
+    }
+
+    // ── BOOK APPOINTMENT ──────────────────────────────────────
+    async function bookAppointment() {
+      // Read all form values
+      const name     = document.getElementById('b-name').value.trim();
+      const age      = document.getElementById('b-age').value;
+      const phone    = document.getElementById('b-phone').value.trim();
+      const email    = document.getElementById('b-email').value.trim();
+      const gender   = document.getElementById('b-gender').value;
+      const blood    = document.getElementById('b-blood').value;
+      const dept     = document.getElementById('b-dept').value;
+      const ageGroup = document.getElementById('b-agegroup').value;
+      const date     = document.getElementById('b-date').value;
+      const time     = document.getElementById('b-time').value;
+      const symptoms = document.getElementById('b-symptoms').value.trim();
+      const temp     = parseFloat(document.getElementById('b-temp').value) || 98.6;
+      const o2       = parseFloat(document.getElementById('b-o2').value)   || 98.0;
+
+      if (!name || !age || !phone || !dept || !date || !time) {
+        showToast('Please fill all required (*) fields.', true);
+        return;
+      }
+
+      try {
+        // Step 1: Create patient (or find existing by phone)
+        let patient;
+        try {
+          patient = await apiFetch('/patients/', 'POST', {
+            name, age: parseInt(age), phone,
+            ...(email  ? { email }        : {}),
+            ...(gender ? { gender }       : {}),
+            ...(blood  ? { blood_group: blood } : {}),
+          });
+        } catch {
+          // Patient with this phone already exists — look them up
+          const result = await apiFetch('/patients/?q=' + encodeURIComponent(phone));
+          patient = result.patients?.[0];
+          if (!patient) throw new Error('Cannot create or find patient with this phone.');
+        }
+
+        // Step 2: Book appointment (backend auto-runs triage)
+        const data = await apiFetch('/appointments/', 'POST', {
+          patient_id:     patient.id,
+          department:     dept,
+          appointment_dt: date + 'T' + time,
+          symptoms,
+          temperature:    temp,
+          o2_saturation:  o2,
+          age_group:      ageGroup,
+        });
+
+        // Step 3: Show triage result
+        const triage  = data.triage;
+        const box     = document.getElementById('booking-triage-box');
+        const lvlEl   = document.getElementById('booking-triage-level');
+        const advEl   = document.getElementById('booking-triage-advice');
+        const bookId  = String(data.appointment.id).padStart(4, '0');
+
+        box.className  = 'triage-box show ' + (triage.level === 'EMERGENCY' ? 'emergency' : 'normal');
+        lvlEl.style.color = triage.level === 'EMERGENCY' ? 'var(--red)' : 'var(--green)';
+        lvlEl.textContent = triage.level === 'EMERGENCY'
+          ? `🚨 EMERGENCY — Booking #A${bookId}`
+          : `✅ NORMAL — Booking #A${bookId}`;
+        advEl.textContent = triage.level === 'EMERGENCY'
+          ? 'Critical indicators detected. Patient added to emergency queue. Staff alerted.'
+          : 'No critical indicators. Appointment confirmed. Reminder will be sent 24h before.';
+
+        showToast(`Appointment #A${bookId} booked successfully!`);
+
+      } catch (e) {
+        showToast(e.message, true);
+      }
+    }
+
+    function clearBookingForm() {
+      ['b-name','b-age','b-phone','b-email','b-temp','b-o2','b-date','b-symptoms']
+        .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+      ['b-gender','b-blood','b-dept','b-time','b-agegroup']
+        .forEach(id => { const el = document.getElementById(id); if (el) el.selectedIndex = 0; });
+      document.getElementById('booking-triage-box').className = 'triage-box';
+    }
+
+    // ── TRIAGE ENGINE (JavaScript mirror of Python logic) ─────
+    // Used as a fallback when the Flask backend is not running
+
+    const RED_FLAG_SYMPTOMS = new Set([
+      'chest_pain','difficulty_breathing','unconscious','severe_bleeding',
+      'stroke_signs','anaphylaxis','cardiac_arrest','severe_head_injury','paralysis','seizure',
+    ]);
+
+    const SYMPTOM_SCORES = {
+      high_fever: 2, vomiting_blood: 3, severe_pain: 2,
+      confusion: 2,  fracture: 2,       dizziness: 1,
+      vomiting: 1,   headache: 1,
+    };
+
+    // All symptoms shown in the triage form
+    const ALL_SYMPTOMS = [
+      { id:'chest_pain',           label:'Chest Pain',           redFlag:true  },
+      { id:'difficulty_breathing', label:'Difficulty Breathing', redFlag:true  },
+      { id:'unconscious',          label:'Unconscious',          redFlag:true  },
+      { id:'severe_bleeding',      label:'Severe Bleeding',      redFlag:true  },
+      { id:'stroke_signs',         label:'Stroke Signs',         redFlag:true  },
+      { id:'seizure',              label:'Seizure',              redFlag:true  },
+      { id:'cardiac_arrest',       label:'Cardiac Arrest',       redFlag:true  },
+      { id:'anaphylaxis',          label:'Allergic Reaction',    redFlag:true  },
+      { id:'high_fever',           label:'High Fever',           redFlag:false },
+      { id:'severe_pain',          label:'Severe Pain',          redFlag:false },
+      { id:'vomiting_blood',       label:'Vomiting Blood',       redFlag:false },
+      { id:'confusion',            label:'Confusion',            redFlag:false },
+      { id:'fracture',             label:'Fracture/Injury',      redFlag:false },
+      { id:'dizziness',            label:'Dizziness',            redFlag:false },
+      { id:'vomiting',             label:'Vomiting',             redFlag:false },
+      { id:'headache',             label:'Headache',             redFlag:false },
+      { id:'mild_cough',           label:'Mild Cough',           redFlag:false },
+      { id:'fatigue',              label:'Fatigue',              redFlag:false },
+    ];
+
+    function buildSymptomGrid() {
+      const grid = document.getElementById('symptom-grid');
+      if (!grid) return;
+      grid.innerHTML = '';
+
+      ALL_SYMPTOMS.forEach(symptom => {
+        const tag = document.createElement('label');
+        tag.className   = 'sym-tag' + (symptom.redFlag ? ' red-flag' : '');
+        tag.dataset.id  = symptom.id;
+        tag.innerHTML   = `<input type="checkbox" value="${symptom.id}"> ${symptom.label}`;
+
+        // Toggle checked state on click
+        tag.addEventListener('click', () => {
+          const cb = tag.querySelector('input');
+          cb.checked = !cb.checked;
+          tag.classList.toggle('checked', cb.checked);
+        });
+
+        grid.appendChild(tag);
+      });
+    }
+
+    // Local JS triage — mirrors Python's classify_patient()
+    function classifyLocally(symptoms, temp, o2, ageGroup) {
+      const reasoning = [];
+      let score = 0;
+
+      // Step 1: Red-flag check → instant EMERGENCY
+      for (const s of symptoms) {
+        if (RED_FLAG_SYMPTOMS.has(s)) {
+          reasoning.push(`🚨 RED FLAG: "${s}" → immediate EMERGENCY`);
+          return { level: 'EMERGENCY', score: 99, priority: 1, reasoning };
+        }
+      }
+
+      // Step 2: Symptom scoring
+      for (const s of symptoms) {
+        const pts = SYMPTOM_SCORES[s] || 0;
+        if (pts > 0) { score += pts; reasoning.push(`Symptom "${s}" → +${pts} pt`); }
+      }
+
+      // Step 3: Temperature
+      if      (temp >= 104) { score += 3; reasoning.push(`Temp ${temp}°F ≥104 → +3`); }
+      else if (temp >= 102) { score += 1; reasoning.push(`Temp ${temp}°F ≥102 → +1`); }
+      else                  { reasoning.push(`Temp ${temp}°F — normal`); }
+
+      // Step 4: O2 saturation
+      if      (o2 <= 90) { score += 3; reasoning.push(`O2 ${o2}% ≤90 → +3`); }
+      else if (o2 <= 94) { score += 2; reasoning.push(`O2 ${o2}% ≤94 → +2`); }
+      else               { reasoning.push(`O2 ${o2}% — acceptable`); }
+
+      // Step 5: Age vulnerability
+      if (ageGroup !== 'adult') { score += 1; reasoning.push(`Age group "${ageGroup}" → +1`); }
+
+      // Step 6: Decision
+      const level = score >= 4 ? 'EMERGENCY' : 'NORMAL';
+      reasoning.push(`Total score: ${score} | Threshold: 4 → ${level}`);
+      return { level, score, priority: score >= 4 ? 2 : 3, reasoning };
+    }
+
+    async function runTriage() {
+      const patientId = parseInt(document.getElementById('t-pid').value);
+      const temp      = parseFloat(document.getElementById('t-temp').value)     || 98.6;
+      const o2        = parseFloat(document.getElementById('t-o2').value)       || 98.0;
+      const ageGroup  = document.getElementById('t-agegroup').value;
+      const symptoms  = [...document.querySelectorAll('#symptom-grid input:checked')].map(i => i.value);
+
+      if (!patientId) { showToast('Enter a Patient ID.', true); return; }
+
+      let result, patientName = 'Patient #' + patientId;
+
+      try {
+        // Try the Flask API first
+        const data  = await apiFetch('/triage/classify', 'POST', {
+          patient_id: patientId, symptoms, temperature: temp,
+          o2_saturation: o2, age_group: ageGroup,
+        });
+        result      = data.result;
+        patientName = data.patient?.name || patientName;
+        showToast(`Triage complete: ${result.level}`, result.level === 'EMERGENCY');
+      } catch {
+        // Fallback: run classification in the browser
+        result = classifyLocally(symptoms, temp, o2, ageGroup);
+        showToast(`Triage (local): ${result.level}`, result.level === 'EMERGENCY');
+      }
+
+      // Display result
+      const box = document.getElementById('triage-result-box');
+      box.className = 'triage-box show ' + (result.level === 'EMERGENCY' ? 'emergency' : 'normal');
+
+      document.getElementById('triage-result-level').style.color  = result.level === 'EMERGENCY' ? 'var(--red)' : 'var(--green)';
+      document.getElementById('triage-result-level').textContent   = result.level === 'EMERGENCY'
+        ? `🚨 EMERGENCY — ${patientName}`
+        : `✅ NORMAL — ${patientName}`;
+      document.getElementById('triage-result-advice').textContent  = result.level === 'EMERGENCY'
+        ? `Score: ${result.score}. Critical indicators found. Immediate physician required.`
+        : `Score: ${result.score}. Patient placed in standard queue.`;
+      document.getElementById('triage-result-reasoning').innerHTML =
+        (result.reasoning || []).map(r => `• ${r}`).join('<br>');
+
+      // Also save to local log
+      localTLogs.unshift({ name: patientName, symptoms, temp, o2, ageGroup, result, time: new Date() });
+    }
+
+    // ── APPOINTMENTS ──────────────────────────────────────────
+    async function loadAppointments() {
+      const statusFilter = document.getElementById('appt-filter-status')?.value || '';
+      const triageFilter = document.getElementById('appt-filter-triage')?.value || '';
+
+      let url = '/appointments/?';
+      if (statusFilter) url += `status=${statusFilter}&`;
+      if (triageFilter) url += `triage_level=${triageFilter}&`;
+
+      try {
+        const data  = await apiFetch(url);
+        const list  = data.appointments || [];
+        const tbody = document.getElementById('appointments-tbody');
+
+        tbody.innerHTML = list.length
+          ? list.map(a => `
+              <tr>
+                <td style="color:var(--faint);font-size:.8rem">#A${String(a.id).padStart(4,'0')}</td>
+                <td><strong>${a.patient_name || '—'}</strong></td>
+                <td>${(a.department || '').replace(/_/g, ' ')}</td>
+                <td style="font-size:.82rem">${formatDate(a.appointment_dt)}</td>
+                <td><span class="badge ${a.triage_level}">${a.triage_level}</span></td>
+                <td><span class="badge ${a.status}">${a.status}</span></td>
+                <td>
+                  <button class="btn btn-ghost btn-sm"
+                    style="color:var(--red);border-color:rgba(255,61,90,.3)"
+                    onclick="cancelAppointment(${a.id})">Cancel</button>
+                </td>
+              </tr>`).join('')
+          : `<tr><td colspan="7" style="color:var(--faint);text-align:center;padding:22px">No appointments found.</td></tr>`;
+
+      } catch {
+        document.getElementById('appointments-tbody').innerHTML =
+          `<tr><td colspan="7" style="color:var(--faint);text-align:center;padding:22px">Connect Flask backend to view appointments.</td></tr>`;
+      }
+    }
+
+    async function cancelAppointment(id) {
+      if (!confirm('Cancel this appointment?')) return;
+      try {
+        await apiFetch('/appointments/' + id, 'DELETE');
+        showToast('Appointment cancelled.');
+        loadAppointments();
+      } catch (e) {
+        showToast(e.message, true);
+      }
+    }
+
+    // ── TRIAGE LOGS ───────────────────────────────────────────
+    async function loadTriageLogs() {
+      const filter = document.getElementById('tlog-filter')?.value || '';
+      const tbody  = document.getElementById('tlog-tbody');
+
+      try {
+        const data = await apiFetch('/triage/logs' + (filter ? '?level=' + filter : ''));
+        const logs = data.logs || [];
+
+        tbody.innerHTML = logs.length
+          ? logs.map((log, i) => `
+              <tr>
+                <td style="color:var(--faint)">${i + 1}</td>
+                <td><strong>${log.patient_name || '—'}</strong></td>
+                <td style="font-size:.76rem;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+                  ${(log.symptoms || []).join(', ') || '—'}
+                </td>
+                <td>${log.temperature}°F</td>
+                <td>${log.o2_saturation}%</td>
+                <td>${log.age_group}</td>
+                <td style="font-weight:700">${log.triage_score}</td>
+                <td style="font-size:.78rem">${formatDate(log.classified_at)}</td>
+                <td><span class="badge ${log.triage_result}">${log.triage_result}</span></td>
+              </tr>`).join('')
+          : `<tr><td colspan="9" style="color:var(--faint);text-align:center;padding:22px">No triage logs yet.</td></tr>`;
+
+      } catch {
+        // Backend offline — show local logs from this session
+        tbody.innerHTML = localTLogs.length
+          ? localTLogs.map((log, i) => `
+              <tr>
+                <td style="color:var(--faint)">${i + 1}</td>
+                <td><strong>${log.name}</strong></td>
+                <td style="font-size:.76rem">${log.symptoms.join(', ') || '—'}</td>
+                <td>${log.temp}°F</td>
+                <td>${log.o2}%</td>
+                <td>${log.ageGroup}</td>
+                <td style="font-weight:700">${log.result.score}</td>
+                <td style="font-size:.78rem">${log.time.toLocaleTimeString()}</td>
+                <td><span class="badge ${log.result.level}">${log.result.level}</span></td>
+              </tr>`).join('')
+          : `<tr><td colspan="9" style="color:var(--faint);text-align:center;padding:22px">No triage logs yet. Run a triage check first.</td></tr>`;
+      }
+    }
+
+    // ── NOTIFICATIONS ─────────────────────────────────────────
+    async function loadNotifications() {
+      const feed = document.getElementById('notif-feed');
+      if (!feed) return;
+
+      try {
+        const data  = await apiFetch('/notifications/');
+        const notifs = data.notifications || [];
+
+        feed.innerHTML = notifs.length
+          ? notifs.map(n => `
+              <div class="notif-item ${n.status !== 'read' ? 'unread' : ''} ${n.is_urgent ? 'urgent' : ''}"
+                   onclick="markAsRead(${n.id}, this)">
+                <div class="notif-icon">${notifIcon(n.notif_type)}</div>
+                <div class="notif-body">
+                  <div class="notif-title">${n.title}</div>
+                  <div class="notif-message">${n.message}</div>
+                </div>
+                <div class="notif-time">${timeAgo(n.created_at)}</div>
+              </div>`).join('')
+          : `<div style="color:var(--faint);text-align:center;padding:28px">No notifications yet.</div>`;
+
+      } catch {
+        // Backend offline — show sample notifications
+        feed.innerHTML = localNotifs.map((n, i) => `
+          <div class="notif-item ${!n.read ? 'unread' : ''} ${n.urgent ? 'urgent' : ''}"
+               onclick="markLocalRead(${i}, this)">
+            <div class="notif-icon">${n.icon}</div>
+            <div class="notif-body">
+              <div class="notif-title">${n.title}</div>
+              <div class="notif-message">${n.msg}</div>
+            </div>
+            <div class="notif-time">${n.time}</div>
+          </div>`).join('');
+      }
+    }
+
+    async function markAsRead(id, el) {
+      try { await apiFetch('/notifications/' + id + '/read', 'PATCH'); } catch {}
+      el.classList.remove('unread', 'urgent');
+    }
+
+    function markLocalRead(index, el) {
+      localNotifs[index].read = true;
+      el.classList.remove('unread', 'urgent');
+    }
+
+    function notifIcon(type) {
+      const icons = { emergency_alert:'🚨', confirmation:'✅', reminder:'📅', system:'📊' };
+      return icons[type] || '🔔';
+    }
+
+    // ── NOTIFICATION MODAL ────────────────────────────────────
+    function openModal(type) {
+      modalType = type;
+      document.getElementById('notif-modal').classList.add('open');
+
+      if (type === 'emergency') {
+        document.getElementById('modal-title').textContent       = '🚨 Send Emergency Alert';
+        document.getElementById('modal-notif-title').value       = '🚨 Emergency Alert';
+        document.getElementById('modal-notif-msg').value         = 'This patient requires immediate medical attention.';
+        document.getElementById('modal-send-btn').className      = 'btn btn-danger';
+      } else {
+        document.getElementById('modal-title').textContent       = '📅 Send Appointment Reminder';
+        document.getElementById('modal-notif-title').value       = 'Appointment Reminder';
+        document.getElementById('modal-notif-msg').value         = 'Your appointment is tomorrow. Please arrive 10 minutes early.';
+        document.getElementById('modal-send-btn').className      = 'btn btn-primary';
+      }
+    }
+
+    function closeModal() {
+      document.getElementById('notif-modal').classList.remove('open');
+      ['modal-pid', 'modal-notif-title', 'modal-notif-msg']
+        .forEach(id => (document.getElementById(id).value = ''));
+    }
+
+    async function sendNotification() {
+      const pid     = parseInt(document.getElementById('modal-pid').value);
+      const title   = document.getElementById('modal-notif-title').value.trim();
+      const message = document.getElementById('modal-notif-msg').value.trim();
+
+      if (!pid || !title || !message) { showToast('Fill all fields.', true); return; }
+
+      try {
+        await apiFetch('/notifications/send', 'POST', {
+          patient_id: pid, title, message,
+          notif_type: modalType === 'emergency' ? 'emergency_alert' : 'reminder',
+          is_urgent:  modalType === 'emergency',
+        });
+        showToast('Notification sent!');
+      } catch {
+        // Add to local feed if backend is offline
+        localNotifs.unshift({
+          icon:   modalType === 'emergency' ? '🚨' : '📅',
+          title, msg: message,
+          time:   'Just now',
+          urgent: modalType === 'emergency',
+          read:   false,
+        });
+        showToast('Queued locally.');
+      }
+
+      closeModal();
+      loadNotifications();
+    }
+
+    // ── UTILITY HELPERS ───────────────────────────────────────
+    function formatDate(isoString) {
+      if (!isoString) return '—';
+      try {
+        return new Date(isoString).toLocaleString('en-IN', {
+          day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit',
+        });
+      } catch { return isoString; }
+    }
+
+    function timeAgo(isoString) {
+      const seconds = (Date.now() - new Date(isoString)) / 1000;
+      if (seconds < 60)    return 'Just now';
+      if (seconds < 3600)  return Math.floor(seconds / 60)   + 'm ago';
+      if (seconds < 86400) return Math.floor(seconds / 3600) + 'h ago';
+      return Math.floor(seconds / 86400) + 'd ago';
+    }
+
+    // ── INITIALISE ────────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', () => {
+      // Build symptom checkboxes in triage form
+      buildSymptomGrid();
+
+      // Close modal when clicking the backdrop
+      document.getElementById('notif-modal').addEventListener('click', function (e) {
+        if (e.target === this) closeModal();
+      });
+
+      // Auto-login if a token was saved from a previous session
+      if (TOKEN) {
+        showApp();
+      } else {
+        document.getElementById('login-screen').style.display = 'flex';
+      }
+    });
+
+  </script>
+</body>
+</html>
